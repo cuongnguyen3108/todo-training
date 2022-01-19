@@ -1,52 +1,48 @@
-import React, {FC, useContext, useState} from 'react';
+import React, {FC, useContext, useEffect, useState} from 'react';
 import AddTodo from './component/AddTodo';
 import Statistic from './component/Statistic';
 import TodoList from './component/TodoList';
 import ClearDoneButton from "./component/ClearDoneButton";
 import TodoContext from "./TodoContext";
 import {ACTION_TYPES} from "./TodoApp";
-import axios from "axios";
-
-const LoadTodo: FC = () => {
-
-    const {dispatch} = useContext(TodoContext)
-    const [isLoading, setIsLoading] = useState(false)
-
-
-    return (
-        <button
-            disabled={isLoading}
-            onClick={event => {
-                setIsLoading(true)
-                axios.get('https://jsonplaceholder.typicode.com/todos/').then(({data}) => {
-                    const firstTen = data.splice(0, 10)
-                    const loadedTodos = (firstTen as any[]).map(todoFromAPI => {
-                        return {
-                            id: todoFromAPI.id,
-                            name: todoFromAPI.title,
-                            done: todoFromAPI.completed
-
-                        }
-                    })
-                    dispatch({
-                        type: ACTION_TYPES.LOAD_TODO,
-                        data: loadedTodos
-                    })
-                }).finally(() => {
-                    setIsLoading(false)
-                })
-            }}>
-            {isLoading ? '...' : 'Load'}
-        </button>
-    )
-}
+import useTodos from "./hooks/useTodos";
 
 const App: FC = () => {
+
+    const {dispatch} = useContext(TodoContext)
+    const [doneStatus, setDoneStatus] = useState(false)
+    const [todos, isLoading] = useTodos({completed: doneStatus, userId: 1})
+
+    const todoListOpacity = isLoading ? 0.4 : 1
+
+    useEffect(() => {
+        !isLoading && dispatch({
+            type: ACTION_TYPES.LOAD_TODO,
+            data: todos
+        })
+    }, [dispatch, todos, isLoading])
+
     return (
         <>
             <Statistic/>
-            <LoadTodo/>
-            <TodoList/>
+            <label>
+                <input
+                    type='checkbox'
+                    onChange={event => {
+                        setDoneStatus(event.target.checked)
+                    }}
+                    disabled={isLoading as boolean}
+                />
+                Filter with done
+            </label>
+            <div style={{
+                opacity: todoListOpacity,
+                transition: "ease-in",
+                transitionDuration: '300ms',
+                transitionProperty: "opacity"
+            }}>
+                <TodoList/>
+            </div>
             <ClearDoneButton/>
             <AddTodo/>
         </>

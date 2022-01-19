@@ -14,7 +14,6 @@ export type TodoAppAction<ActionData> = {
 }
 
 export const TodoReducer: Reducer<TodoData[], TodoAppAction<unknown>> = (prevState, action) => {
-    console.log(action)
     switch (action.type) {
         case ACTION_TYPES.CLEAR_DONE:
             return prevState.filter(({done}) => !done)
